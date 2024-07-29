@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        padding: 0;
+        background-color: #f4f4f9;
+      }
+      h1, h2 {
+        color: #333;
+      }
+      .bigcontainer{
+        display: flex;
+        flex-direction: row;
+      }
+      .left{
+        flex-basis: 40%;
+        padding: 20px;
+      }
+      .right{
+        flex-basis: 60%;
+        padding: 20px;
+      }
+      .bottom{
+        display: flex;
+        flex-direction: column;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      table, th, td {
+        border: 1px solid #ddd;
+      }
+      th, td {
+        padding: 10px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      form {
+        margin-bottom: 20px;
+      }
+      input[type="text"], input[type="datetime-local"], textarea {
+        width: calc(100% - 22px);
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      textarea {
+        resize: vertical;
+      }
+      input[type="button"], button {
+        background-color: #03346E;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      input[type="button"]:hover, button:hover {
+        opacity: 0.8;
+      }
+      #message {
+        margin-top: 10px;
+      }
+      #task-list {
+        list-style-type: none;
+        padding: 0;
+      }
+      #task-list .task-row {
+        background: #e7f3fe;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #task-list .btn-group button{
+        /* float: right; */
+        padding: 8px 20px;
+        margin: 0 5px;
+      }
+      #heading{
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #heading h1, #heading form{
+        margin: 0;
+      }
+      /* Custom modal styles */
+      .alert-modal {
+        display: none; 
+        position: fixed; 
+        z-index: 1; 
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+      }
+      .alert-modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; 
+        padding: 20px;
+        border: 1px solid #888;
+        width: 40%;
+        border-radius: 20px;
+      }
+      .alert-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .alert-close:hover, .alert-close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      #alert-modalTitle{
+        margin: 0;
+      }
+      .delete-btn{
+        background-color: #F5004F;
+      }
+      .toggle-button.off{
+        background-color: #F6FB7A;
+        color: #000;
+      }
+      .toggle-button.on{
+        background-color: #508D4E;
+      }
+    </style>
+  </head>
+  <body>
+      <!-- <h3>Sale LeaderBoard</h3> -->
+      <? var url = getUrl(); ?>
+      <div id="heading">
+        <h1>Welcome, <?= username ?></h1>
+        <form method="post" action="<?= url ?>">
+          <button name="LogoutButton" value="Logout">Logout</button>
+        </form>
+      </div>
+      <div class="bigcontainer">
+        <div class="left">
+          <h2>Sale LeaderBoard</h2>
+          <? var rdata = rankfunction(); ?>
+          <table>
+            <thead>
+              <tr>
+                <th>Ranking</th>
+                <th>ID</th>
+                <th>Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <? for (var i = 0; i < 10; i++) { ?>
+              <tr>
+                <td><?= rdata[i][rdata[i].length - 1] ?></td>
+                <td><?= rdata[i][0] ?></td>
+                <td>
+                  <?= rdata[i][1] ?>
+                  <?  var icon = "";
+                      if(i == 0){
+                        icon = "👑";
+                      }
+                      if(rdata[i][0] == id){
+                        icon = "👤";
+                      }
+                  ?>
+                  <span><?= icon ?></span>
+                </td>
+              </tr>
+              <? } ?>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="right">
+          <div class="up">
+            <h2>To-Do List</h2>
+            <div id="errormessage" style="color: red;"></div>
+            <div>
+              <input type="text" id="task" placeholder="Enter your task">
+              <input type="text" id="taskDesc" placeholder="Enter your description of the task...">
+              <input type="hidden" id="taskid" value="<?= id ?>">
+              <button onclick="addTask()">Add Task</button>
+            </div>
+            <div id="task-list"></div>
+          </div>
+          
+          <div class="bottom">
+            <h2>Schedule Meeting</h2>
+            <div style="width: 100%;"><button onclick="openCalendar()" style="float: right;">View Calendar</button></div>
+            <div id="message"></div>
+            <form id="meetingForm">
+              <label for="title">Meeting Title:</label>
+              <input type="text" id="title" name="title" required><br>
+              
+              <label for="startTime">Start Time:</label>
+              <input type="datetime-local" id="startTime" name="startTime" required><br>
+              
+              <label for="endTime">End Time:</label>
+              <input type="datetime-local" id="endTime" name="endTime" required><br>
+              
+              <label for="description">Description:</label>
+              <textarea id="description" name="description" required></textarea><br>
+              
+              <label for="attendees">Attendees (comma-separated emails):</label>
+              <input type="text" id="attendees" name="attendees"><br>
+              
+              <input type="button" value="Schedule Meeting" onclick="scheduleMeeting()">
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- Pop up Alert Modal -->
+      <div id="alert-myModal" class="alert-modal">
+        <div class="alert-modal-content">
+          <span class="alert-close" onclick="closeModal()">&times;</span>
+          <h2 id="alert-modalTitle"></h2>
+          <p id="alert-modalMessage"></p>
+        </div>
+      </div>
+
+      <div id="confirm-myModal" class="alert-modal">
+        <div class="alert-modal-content" style="display: flex; flex-direction: column;">
+          <h2>Delete Confirmation</h2>
+          <p>Are you sure to delete this record? You may add the same task after deletion.</p>
+          <div class="btn-group" style="float: right; display: inline-flex; justify-content: end;">
+            <button id="cancelBtn" style="border: 2px solid #03346E; background-color: #fff; color: #000; margin: 0 2px;">Cancel</button>
+            <button id="confirmBtn" style="margin: 0 2px;">OK</button>
+          </div>
+        </div>
+      </div>
+
+    <script>
+      var taskid = document.getElementById('taskid').value;
+
+      document.addEventListener('DOMContentLoaded', function() {
+        google.script.run.withSuccessHandler(updateTaskList).getTasks(taskid);
+      });
+
+      function confirmDelete(taskNo) {
+        deleteTaskNo = taskNo;
+        document.getElementById('confirm-myModal').style.display = 'block';
+      }
+
+      document.getElementById('confirmBtn').onclick = function() {
+        google.script.run.withSuccessHandler(updateTaskList).deleteTask(taskid, deleteTaskNo);
+        document.getElementById('confirm-myModal').style.display = 'none';
+      };
+
+      document.getElementById('cancelBtn').onclick = function() {
+        document.getElementById('confirm-myModal').style.display = 'none';
+      };
+
+      function updateTaskList(tasks) {
+        var taskList = document.getElementById('task-list');
+        taskList.innerHTML = '';
+
+        tasks.forEach(function(task) {
+          var li = document.createElement('div');
+          li.className = 'task-row';
+
+          var toggleButton = document.createElement('button');
+          toggleButton.className = 'toggle-button ' + (task.status ? 'on' : 'off');
+          toggleButton.textContent = task.status ? 'Complete' : 'Incomplete';
+          toggleButton.onclick = function() {
+            var newStatus = toggleButton.classList.contains('off') ? 'TRUE' : 'FALSE';
+            google.script.run.withSuccessHandler(updateTaskList).updateTaskStatus(taskid, task.no, newStatus);
+          };
+
+          var taskText = document.createTextNode(task.task + " - " + task.description);
+          
+          var btnGroup = document.createElement('div');
+          btnGroup.className = 'btn-group';
+
+          var deleteButton = document.createElement('button');
+          deleteButton.className = 'delete-btn';
+          deleteButton.textContent = 'Delete';
+          deleteButton.onclick = function() {
+            confirmDelete(task.no);
+          };
+
+          li.appendChild(taskText);
+          btnGroup.appendChild(toggleButton);
+          btnGroup.appendChild(deleteButton);
+          li.appendChild(btnGroup);
+          taskList.appendChild(li);
+        });
+      }
+
+      function addTask() {
+        var task = document.getElementById('task').value;
+        var taskDesc = document.getElementById('taskDesc').value;
+
+        if (task && taskDesc) {
+          google.script.run.withSuccessHandler(updateTaskList).addTask(taskid, task, taskDesc);
+          document.getElementById('task').value = '';
+          document.getElementById('taskDesc').value = '';
+        } else {
+          document.getElementById('errormessage').textContent = 'Please enter both task and description.';
+        }
+      }
+
+      function showModal(title, message) {
+        document.getElementById('alert-modalTitle').textContent = title;
+        document.getElementById('alert-modalMessage').textContent = message;
+        document.getElementById('alert-myModal').style.display = 'block';
+      }
+
+      function closeModal() {
+        document.getElementById('alert-myModal').style.display = 'none';
+        document.getElementById('addtask-modal').style.display = 'none';
+        document.getElementById('addmeeting-modal').style.display = 'none';
+      }
+
+      function scheduleMeeting() {
+        var form = document.getElementById('meetingForm');
+        var formData = new FormData(form);
+        var meetingTitle = formData.get('title').trim();
+        var startTime = formData.get('startTime');
+        var endTime = formData.get('endTime');
+        var description = formData.get('description').trim();
+        var attendees = formData.get('attendees');
+        var messageDiv = document.getElementById('message');
+
+        console.log('Raw start time:', startTime);
+        console.log('Raw end time:', endTime);
+
+        startTime = new Date(startTime);
+        endTime = new Date(endTime);
+
+        console.log('Parsed start time:', startTime);
+        console.log('Parsed end time:', endTime);
+
+        if (!meetingTitle || !description) {
+          showModal('Error', 'Please fill in all required information.');
+          return;
+        }
+
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          showModal('Error', 'Invalid date or time. Please enter valid dates.');
+          return;
+        }
+
+        var now = new Date();
+        if (startTime < now) {
+          showModal('Error', 'Start time cannot be in the past.');
+          return;
+        }
+
+        if (endTime <= startTime) {
+          showModal('Error', 'End time must be after the start time.');
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            if (response) {
+              showModal('Success', 'Meeting scheduled successfully! Kindly check on your google calendar.');
+              form.reset();
+            } else if (response.error) {
+              showModal('Error', 'Error scheduling meeting: ' + response.error);
+              form.reset();
+            }
+          })
+          .createMeetEvent(
+            meetingTitle,
+            startTime.toISOString(),
+            endTime.toISOString(),
+            description,
+            attendees ? attendees.split(',') : []
+          );
+
+        document.getElementById('title').value = '';
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('attendees').value = '';
+      }
+      function openCalendar() {
+        window.open('https://calendar.google.com/', '_blank');
+      }
+    </script>
+  </body>
+</html>
